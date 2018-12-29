@@ -1,0 +1,89 @@
+---
+title: "Machine Learning"
+author: "Smoore"
+date: "12/26/2018"
+output: html_document
+---
+
+setwd("~/Downloads/Machine_Learning")
+knit("Machine_Learning.Rmd")
+
+## Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. 
+
+The goal of this project is to predict the manner in which they did the exercise. This is the classe variable in the training set, considering any of the other variables as predictors.
+
+## Load and Explore Data
+
+```{r package, warning=FALSE, message=FALSE}
+
+library(caret)
+library(randomForest)
+library(rpart)
+library(RColorBrewer)
+library(ggplot2)
+
+
+training <- read.csv("pml-training.csv", header = TRUE, na.strings=c("NA","#DIV/0!",""))
+testing <- read.csv("pml-testing.csv", header = TRUE, na.strings=c("NA","#DIV/0!",""))
+
+dim(training)
+dim(testing)
+table(training$classe)
+
+#There are 19,622 observation in traning dataset, including 160 variables. The last column is the target variable class. The largest class is A.
+
+#Removed all variables that contain NA values and variables that are not direcly related to the target variable classe.  
+
+Count_of_NA_Values = sapply(1:dim(training)[2],function(x)sum(is.na(training[,x])))
+List_of_NA_Values = which(Count_of_NA_Values>0)
+colnames(training[,c(1:7)])
+
+training = training[,-List_of_NA_Values ]
+training = training[,-c(1:7)]
+training$class = factor(training$class)
+
+testing = testing[,-List_of_NA_Values ]
+testing = testing[,-c(1:7)]
+
+
+#Random Forest Model generates a model with accuracy. 
+
+InTrain <- createDataPartition(training$classe, p = 0.7, list = FALSE)
+subTraining <- training[InTrain, ]
+subTesting <- training[-InTrain, ]
+dim(subTraining)
+dim(subTesting)
+
+
+
+
+set.seed(1234)
+
+ModFit <- train(classe ~ ., method = "rf", data = subTraining, importance = T, trControl = trainControl(method = "cv", number = 4))
+validation_pred <- predict(ModFit, newdata=subTesting)
+
+
+confusionMatrix(validation_pred,subTesting$classe)
+
+testing_pred <- predict(ModFit, newdata=subTesting)
+write_files <- function(x) {
+        n <- length(x)
+        for (i in 1:n) {
+                filename <- paste0("problem_id", i, ".txt")
+                write.table(x[i], file=filename, quote=FALSE, row.names=FALSE,col.names=FALSE)
+        }
+}
+write_files(testing_pred)
+
+
+```
+
+
+
+
+
+
+
+

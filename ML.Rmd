@@ -6,7 +6,6 @@ output: html_document
 ---
 
 setwd("~/Downloads/Machine_Learning")
-knit("Machine_Learning.Rmd")
 
 ## Background
 
